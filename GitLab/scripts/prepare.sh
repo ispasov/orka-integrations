@@ -7,7 +7,13 @@ set -eo pipefail
 
 token=$(curl -sd '{"email":'\"$CUSTOM_ENV_ORKA_USER\"', "password":'\"$CUSTOM_ENV_ORKA_PASSWORD\"'}' -H "Content-Type: application/json" -X POST $CUSTOM_ENV_ORKA_ENDPOINT/token | jq -r '.token')
 
-vm_info=$(curl -sd '{"orka_vm_name":'\"$CUSTOM_ENV_ORKA_VM_NAME\"'}' -H "Content-Type: application/json" -H "Authorization: Bearer $token" -X POST $CUSTOM_ENV_ORKA_ENDPOINT/resources/vm/deploy)
+node_data=""
+if [ ! -z $CUSTOM_ENV_ORKA_NODE ]; then
+    node_data=", \"orka_node_name\":\"$CUSTOM_ENV_ORKA_NODE\""
+fi
+
+body=$(echo '{"orka_vm_name":'\"$CUSTOM_ENV_ORKA_VM_NAME\" $node_data'}')
+vm_info=$(curl -sd "$body" -H "Content-Type: application/json" -H "Authorization: Bearer $token" -X POST $CUSTOM_ENV_ORKA_ENDPOINT/resources/vm/deploy)
 
 errors=$(echo $vm_info | jq -r '.errors[]?.message')
 if [ "$errors" ]; then
